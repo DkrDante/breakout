@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Areana breakout</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            margin: auto;
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="breakoutcanvas" width="600" height="500"></canvas>
+    <script>
+        const canvas = document.getElementById("breakoutcanvas");
+        const ctx = canvas.getContext("2d");
+
+        let level = 1;
+        let brickRowCount = 5;
+        let brickColumnCount = 9;
+        let dx = 2;
+        let dy = -2;
+        let interval;
+
+        let highScore = localStorage.getItem("highScore") || 0;
+
+        // Ball
+        let ballRadius = 10;
+        let x = canvas.width / 2;
+        let y = canvas.height - 30;
+
+        // Paddle
+        const paddleHeight = 10;
+        const paddleWidth = 75;
+        let paddlex = (canvas.width - paddleWidth) / 2;
+
+        // Control
+        let rightpress = false;
+        let leftpress = false;
+
+        // Block
+        const brickWidth = 75;
+        const brickHeight = 20;
+        const brickPadding = 10;
+        const brickOffsetTop = 30;
+        const brickOffsetLeft = 30;
+        const bricks = [];
+
+        function generateBrickPatterns() {
+            for (let i = 0; i < brickColumnCount; i++) {
+                bricks[i] = [];
+                for (let j = 0; j < brickRowCount; j++) {
+                    const brickExists = Math.random() < 0.7;
+                    bricks[i][j] = { x: 0, y: 0, status: brickExists ? 1 : 0 };
+                }
+            }
+        }
+
+        function startLevel() {
+            generateBrickPatterns();
+            interval = setInterval(draw, 10);
+        }
+
+        function nextLevel() {
+            clearInterval(interval);
+            level++;
+            brickRowCount += 2;
+            brickColumnCount += 2;
+            dx *= 1.1;
+            dy *= 1.1;
+            startLevel();
+        }
+
+        function keyDownHandler(e) {
+            if (e.key === "Right" || e.key === "ArrowRight") {
+                rightpress = true;
+            } else if (e.key === "Left" || e.key === "ArrowLeft") {
+                leftpress = true;
+            }
+        }
+
+        function keyUpHandler(e) {
+            if (e.key === "Right" || e.key === "ArrowRight") {
+                rightpress = false;
+            } else if (e.key === "Left" || e.key === "ArrowLeft") {
+                leftpress = false;
+            }
+        }
+
+        function collisionDetection() {
+            for (let i = 0; i < brickColumnCount; i++) {
+                for (let j = 0; j < brickRowCount; j++) {
+                    const brick = bricks[i][j];
+                    if (brick.status === 1) {
+                        if (
+                            x > brick.x &&
+                            x < brick.x + brickWidth &&
+                            y > brick.y &&
+                            y < brick.y + brickHeight
+                        ) {
+                            dy = -dy;
+                            brick.status = 0;
+                            if (bricks.every(row => row.every(brick => brick.status === 0))) {
+                                if (level > highScore) {
+                                    highScore = level;
+                                    localStorage.setItem("highScore", highScore);
+                                    alert("Congratulations! You cleared this level and set a new high score.");
+                                } else {
+                                    alert("Congratulations! You cleared this level.");
+                                }
+                                nextLevel();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawPaddle() {
+            ctx.beginPath();
+            ctx.rect(paddlex, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+            ctx.fillStyle = "#BD6D46";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawBricks() {
+            for (let i = 0; i < brickColumnCount; i++) {
+                for (let j = 0; j < brickRowCount; j++) {
+                    if (bricks[i][j].status === 1) {
+                        const brickx = i * (brickWidth + brickPadding) + brickOffsetLeft
+                        const bricky = j * (brickHeight + brickPadding) + brickOffsetTop;
+                        bricks[i][j].x = brickx;
+                        bricks[i][j].y = bricky;
+                        ctx.beginPath();
+                        ctx.rect(brickx, bricky, brickWidth, brickHeight);
+
+                        if ((i + j) % 2 === 0) {
+                            ctx.fillStyle = "#000000";
+                        } else {
+                            ctx.fillStyle = "#BD6D46";
+                        }
+
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBricks();
+            drawBall();
+            drawPaddle();
+            collisionDetection();
+
+            x += dx;
+            y += dy;
+
+            if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+                dx = -dx;
+            }
+            if (y + dy < ballRadius) {
+                dy = -dy;
+            } else if (y + dy > canvas.height - ballRadius) {
+                if (x > paddlex && x < paddlex + paddleWidth) {
+                    dy = -dy;
+                } else {
+                    alert("Game over");
+                    document.location.reload();
+                    clearInterval(interval);
+                }
+            }
+
+            if (rightpress && paddlex < canvas.width - paddleWidth) {
+                paddlex += 7;
+            }
+            else if (leftpress && paddlex > 0)
+            {
+                paddlex -= 7;
+            }
+        }
+
+        document.addEventListener("keydown", keyDownHandler);
+        document.addEventListener("keyup", keyUpHandler);
+
+        startLevel();
+
+    </script>
+</body>
+</html>
