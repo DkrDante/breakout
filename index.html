@@ -5,54 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Areana breakout</title>
     <style>
+      
         body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #111812;
         }
-        canvas {
-            display: block;
-            margin: auto;
-            background-color: #f2f2f2;
-        }
+        #breakoutcanvas{
+            background: #ccc;
+            margin-top: 10rem;
+            border: 2px solid rgb(189, 99, 60);
+        }   
     </style>
 </head>
 <body>
-    <canvas id="breakoutcanvas" width="600" height="500"></canvas>
-    <script>
-        const canvas = document.getElementById("breakoutcanvas");
-        const ctx = canvas.getContext("2d");
+        <canvas id="breakoutcanvas" width="650" height="450"></canvas>
 
-        let level = 1;
-        let brickRowCount = 5;
-        let brickColumnCount = 9;
+    
+    <script>
+        let canvas = document.getElementById("breakoutcanvas");
+        let ctx = canvas.getContext("2d");
+
+        let ballRadius=9;
+
+
         let dx = 2;
         let dy = -2;
-        let interval;
 
-        let highScore = localStorage.getItem("highScore") || 0;
 
-        // Ball
-        let ballRadius = 10;
-        let x = canvas.width / 2;
-        let y = canvas.height - 30;
+        let x = canvas.width / (Math.floor(Math.random()*Math.random()*10)+3);
+        let y = canvas.height - 40;
 
-        // Paddle
-        const paddleHeight = 10;
-        const paddleWidth = 75;
+
+        let paddleHeight = 12;
+        let paddleWidth = 72;
         let paddlex = (canvas.width - paddleWidth) / 2;
-
+        let brickRowCount=5,brickColumnCount=9;
         // Control
         let rightpress = false;
         let leftpress = false;
 
         // Block
-        const brickWidth = 75;
-        const brickHeight = 20;
-        const brickPadding = 10;
-        const brickOffsetTop = 30;
-        const brickOffsetLeft = 30;
-        const bricks = [];
+        let brickWidth = 54;
+        let brickHeight = 18;
+        let brickPadding = 12;
+        let brickOffsetTop = 40;
+        let brickOffsetLeft = 33;
+        let score=0;
+        let bricks = [];
+        
 
         function generateBrickPatterns() {
             for (let i = 0; i < brickColumnCount; i++) {
@@ -69,15 +72,7 @@
             interval = setInterval(draw, 10);
         }
 
-        function nextLevel() {
-            clearInterval(interval);
-            level++;
-            brickRowCount += 2;
-            brickColumnCount += 2;
-            dx *= 1.1;
-            dy *= 1.1;
-            startLevel();
-        }
+        
 
         function keyDownHandler(e) {
             if (e.key === "Right" || e.key === "ArrowRight") {
@@ -108,33 +103,31 @@
                         ) {
                             dy = -dy;
                             brick.status = 0;
-                            if (bricks.every(row => row.every(brick => brick.status === 0))) {
-                                if (level > highScore) {
-                                    highScore = level;
-                                    localStorage.setItem("highScore", highScore);
-                                    alert("Congratulations! You cleared this level and set a new high score.");
-                                } else {
-                                    alert("Congratulations! You cleared this level.");
-                                }
-                                nextLevel();
+                            score++;
+                            if (score==brickRowCoun*brickColumnCount){
+                              alert('You Win!');
+                                document.location.reload();
+
+                            }
                             }
                         }
                     }
                 }
             }
-        }
-
+        
+// draw ball
         function drawBall() {
             ctx.beginPath();
             ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillStyle='#333';
+            ctx.fill();                     
             ctx.closePath();
         }
-
+// draw paddle
         function drawPaddle() {
             ctx.beginPath();
-            ctx.rect(paddlex, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-            ctx.fillStyle = "#BD6D46";
+            ctx.rect(paddlex, canvas.height - paddleHeight, paddleWidth, paddleHeight, 30);
+            ctx.fillStyle = "#333";
             ctx.fill();
             ctx.closePath();
         }
@@ -162,9 +155,15 @@
                 }
             }
         }
+        function trackscrore(){
+            ctx.font='bold 16px sans-serif';
+            ctx.fillStyle='#333';
+            ctx.fillText('Score: '+score,8,24)
+        }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            trackscrore();
             drawBricks();
             drawBall();
             drawPaddle();
@@ -182,7 +181,7 @@
                 if (x > paddlex && x < paddlex + paddleWidth) {
                     dy = -dy;
                 } else {
-                    alert("Game over");
+                    alert("KYU NAHI HO RAHI PADHAI");
                     document.location.reload();
                     clearInterval(interval);
                 }
